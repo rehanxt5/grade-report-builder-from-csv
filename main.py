@@ -266,7 +266,13 @@ def getStudentWiseData(finalData,primary_key='id'):
         i+=1
     getStudentWiseData.append(data)
     return getStudentWiseData
-    
+def generate_csv_report(data , output_file):
+    if not os.path.exists('report'):
+        os.mkdir('report')
+    with open(os.path.join('report',output_file),'w') as f:
+        writer = csv.DictWriter(f,list(data[0].keys()))
+        writer.writeheader()
+        writer.writerows(data)
 def gradingAlgorithm(config_file, csv_file):
 
     # reading the config file
