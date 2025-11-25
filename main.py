@@ -220,6 +220,34 @@ def verify_all_configs(csv_files, config_files):
     line_break()
     print("✓ All config verifications passed successfully!")
     line_break()
+def grade(gradeThreshold, total):
+    """
+    gradeThreshold: mapping like {'A+':'95', 'A':'85', ...'}
+    total: numeric score
+    Returns grade string.
+    """
+    # parse thresholds into floats without mutating caller's dict
+    try:
+        gt = {k: float(v) for k, v in gradeThreshold.items()}
+    except Exception as e:
+        raise ValueError("Grade thresholds must be numeric") from e
+
+    # Check from highest to lowest; only >= is needed
+    if total >= gt['A+']:
+        return 'A+'
+    if total >= gt['A']:
+        return 'A'
+    if total >= gt['B+']:
+        return 'B+'
+    if total >= gt['B']:
+        return 'B'
+    if total >= gt['C+']:
+        return 'C+'
+    if total >= gt['C']:
+        return 'C'
+    if total >= gt['D']:
+        return 'D'
+    return 'F'
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A simple app to generate reports.")
     parser.add_argument("--csv_file", type=str, required=True, help="Path(s) to the input CSV file(s), comma-separated.")
