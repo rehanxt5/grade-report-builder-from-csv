@@ -241,4 +241,17 @@ if __name__ == "__main__":
     validate_files(csv_files, ".csv")
     validate_files(config_files, ".ini")
     
-
+    # Verify config file structure and CSV compatibility
+    verify_all_configs(csv_files, config_files)
+    
+    if args.output_file:
+        validate_files([args.output_file], f".{args.output_format}")
+    
+    print("All files validated successfully.")
+    line_break()
+    print("CSV file(s):", ", ".join(csv_files))
+    print("Config file(s):", ", ".join(config_files))
+    print("Output file:", args.output_file)
+    print("Output format:", args.output_format)
+    print("Mode:", args.mode)
+    line_break()
