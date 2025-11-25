@@ -317,6 +317,50 @@ def gradingAlgorithm(config_file, csv_file):
     return finalData
 
 
+def generate_combined_pdf(finalData, output_file,config_file):
+
+    # generating temporary folder
+    if not os.path.exists('tmp'):
+        os.mkdir('tmp')
+    else:
+        shutil.rmtree('tmp')
+        os.mkdir('tmp')
+    i = 0
+
+    #config file
+    config = configparser.ConfigParser()
+    config.optionxform = str
+    config.read(config_file)
+    
+    reportSettings = dict(config['ReportSettings'])
+    primary_key = reportSettings.get('primary_key', 'id')
+    secondary_key = reportSettings.get('secondary_key', None)
+    studentWiseData = getStudentWiseData(finalData, primary_key)
+    
+    for data in studentWiseData:
+        if not secondary_key:
+            fileName = f"{data[0][primary_key]}_{data[0][secondary_key]}_report.pdf"
+        else:
+            fileName = f"{data[0][primary_key]}_{data[0][secondary_key]}_report.pdf"
+
+        generate_pdf_report(data, fileName, config_file)
+    # Combining them into one
+    files = os.listdir('tmp') #file1.pdf ,file2.pdf 
+    pdf_files = [os.path.join('tmp',file) for file in files] # tmp/file1.pdf , tmp/file2.pdf
+    # 2. Create a PdfWriter object (the "merger")
+    merger = PdfWriter()
+
+    # 3. Loop through the list and append them
+    for pdf in pdf_files:
+        merger.append(pdf)
+
+    # 4. Write the combined result to a new file
+    merger.write(output_file)
+    merger.close()
+
+    print("PDFs merged successfully!")
+        
+
 
 def generate_pdf_report(data, output_file, config_file):
     """
