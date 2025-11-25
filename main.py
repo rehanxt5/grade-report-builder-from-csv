@@ -255,3 +255,12 @@ if __name__ == "__main__":
     print("Output format:", args.output_format)
     print("Mode:", args.mode)
     line_break()
+
+    # Read primary and secondary keys from the first config file
+    config = configparser.ConfigParser()
+    config.optionxform = str
+    config.read(config_files[0])    
+    reportSettings = dict(config['ReportSettings']) 
+
+    primary_key = reportSettings.get('primary_key')
+    secondary_key = reportSettings.get('secondary_key', None)
