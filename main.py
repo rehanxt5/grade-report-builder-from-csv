@@ -10,6 +10,156 @@ def validate_files(file_list, type):
             raise ValueError(f"Invalid file type for {file}. Expected a {type} file.")
     return True
 
+def verify_config(config_file, csv_file):
+    """
+    Verifies that the config file has all required sections and settings,
+    and that the columns match between config and CSV file.
+    Also validates that marks in CSV don't exceed total marks defined in config.
+    
+    Args:
+        config_file: Path to the configuration INI file
+        csv_file: Path to CSV file
+        
+    Raises:
+        ValueError: If any required section, setting, or column is missing,
+                   or if marks exceed total marks
+    """
+    config = configparser.ConfigParser()
+    # Preserve case for keys
+    config.optionxform = str
+    config.read(config_file)
+    
+    # Required sections
+    required_sections = ['TotalMarks', 'Weights', 'GradeThresholds', 'ReportSettings']
+    
+    # 1. Verify all required sections exist
+    for section in required_sections:
+        if section not in config.sections():
+            raise ValueError(f"[{config_file}] Missing required section '[{section}]' in config file.")
+    
+    # 2. Get TotalMarks columns
+    if not config.has_section('TotalMarks'):
+        raise ValueError(f"[{config_file}] Missing '[TotalMarks]' section in config file.")
+    
+    total_marks_columns = list(config['TotalMarks'].keys())
+    if not total_marks_columns:
+        raise ValueError(f"[{config_file}] '[TotalMarks]' section is empty. Please define total marks for columns.")
+    
+    # Store total marks as integers for validation
+    total_marks = {}
+    for col in total_marks_columns: #['hw1','hw2']
+        try:
+            total_marks[col] = int(config['TotalMarks'][col])
+        except ValueError:
+            raise ValueError(f"[{config_file}] Invalid total marks value for '{col}'. Must be an integer.")
+    
+    # 3. Verify Weights section has all columns from TotalMarks
+    if not config.has_section('Weights'):
+        raise ValueError(f"[{config_file}] Missing '[Weights]' section in config file.")
+    
+    weights_columns = list(config['Weights'].keys())
+    for col in total_marks_columns:
+        if col not in weights_columns:
+            raise ValueError(f"[{config_file}] Missing weight for column '{col}' in '[Weights]' section.")
+    
+    # Check if there are extra weights not in TotalMarks
+    for col in weights_columns:
+        if col not in total_marks_columns:
+            raise ValueError(f"[{config_file}] Weight defined for '{col}' but no total marks specified in '[TotalMarks]' section.")
+    
+    # 4. Verify GradeThresholds has required grade levels
+    if not config.has_section('GradeThresholds'):
+        raise ValueError(f"[{config_file}] Missing '[GradeThresholds]' section in config file.")
+    
+    required_grades = ['A+', 'A', 'B+', 'B', 'C+', 'C', 'D', 'F']
+    grade_thresholds = dict(config['GradeThresholds'])
+    
+    for grade in required_grades:
+        if grade not in grade_thresholds:
+            raise ValueError(f"[{config_file}] Missing grade threshold for '{grade}' in '[GradeThresholds]' section.")
+    
+    # 5. Verify ReportSettings
+    if not config.has_section('ReportSettings'):
+        raise ValueError(f"[{config_file}] Missing '[ReportSettings]' section in config file.")
+    
+    # Check for report_title
+    if not config.has_option('ReportSettings', 'report_title'):
+        raise ValueError(f"[{config_file}] Missing 'report_title' in '[ReportSettings]' section.")
+    
+    # Check for _treat_missing_as_zero
+    if not config.has_option('ReportSettings', '_treat_missing_as_zero'):
+        raise ValueError(f"[{config_file}] Missing '_treat_missing_as_zero' in '[ReportSettings]' section.")
+    
+    # Check for columns setting
+    if not config.has_option('ReportSettings', 'coloumns'):
+        raise ValueError(f"[{config_file}] Missing 'coloumns' in '[ReportSettings]' section.")
+    
+    # Parse the columns from ReportSettings
+    report_columns_str = config.get('ReportSettings', 'coloumns')
+    report_columns = [col.strip() for col in report_columns_str.split(',')]
+    
+    # Verify that report columns include all TotalMarks and Weights columns
+    for col in total_marks_columns:
+        if col not in report_columns:
+            raise ValueError(f"[{config_file}] Column '{col}' from '[TotalMarks]' is missing in '[ReportSettings]' coloumns.")
+    
+    # 6. Verify CSV file has all required columns and validate marks
+    try:
+        with open(csv_file, 'r') as f:
+            reader = csv.DictReader(f)
+            csv_columns = reader.fieldnames
+            
+            if csv_columns is None:
+                raise ValueError(f"[{csv_file}] CSV file is empty or has no header row.")
+            
+            # Check if all TotalMarks columns exist in CSV
+            for col in total_marks_columns:
+                if col not in csv_columns:
+                    raise ValueError(f"[{csv_file}] Column '{col}' from '[TotalMarks]' is missing in CSV file.")
+            
+            # 7. Validate that marks don't exceed total marks
+            row_num = 1  # Start from 1 (header is row 0)
+            for row in reader:
+                row_num += 1
+                for col in total_marks_columns:
+                    value = row.get(col, '').strip()
+                    
+                    # Skip empty values if treat_missing_as_zero is True
+                    if not value:
+                        continue
+                    
+                    try:
+                        marks = float(value)
+                        if marks > total_marks[col]:
+                            student_name = row.get('name', 'Unknown')
+                            student_id = row.get('id', 'Unknown')
+                            subject = row.get('subject', 'Unknown')
+                            raise ValueError(
+                                f"[{csv_file}] Row {row_num}: Student '{student_name}' (ID: {student_id}, Subject: {subject}) "
+                                f"has {marks} marks in '{col}' which exceeds total marks of {total_marks[col]}."
+                            )
+                    except ValueError as e:
+                        if "exceeds total marks" in str(e):
+                            raise
+                        # Invalid number format
+                        student_name = row.get('name', 'Unknown')
+                        student_id = row.get('id', 'Unknown')
+                        subject = row.get('subject', 'Unknown')
+                        raise ValueError(
+                            f"[{csv_file}] Row {row_num}: Invalid marks value '{value}' for column '{col}' "
+                            f"(Student: {student_name}, ID: {student_id}, Subject: {subject}). Must be a number."
+                        )
+            
+    except FileNotFoundError:
+        raise ValueError(f"[{csv_file}] CSV file not found.")
+    except Exception as e:
+        if isinstance(e, ValueError):
+            raise
+        raise ValueError(f"[{csv_file}] Error reading CSV file: {str(e)}")
+    
+    print(f"✓ Config '{config_file}' verification passed for CSV '{csv_file}'.")
+    return True
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A simple app to generate reports.")
     parser.add_argument("--csv_file", type=str, required=True, help="Path(s) to the input CSV file(s), comma-separated.")
