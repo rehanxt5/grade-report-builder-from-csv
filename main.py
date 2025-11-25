@@ -610,3 +610,53 @@ if __name__ == "__main__":
     primary_key = reportSettings.get('primary_key')
     secondary_key = reportSettings.get('secondary_key', None)
     
+    # Grading algorithm
+    if args.mode == 'report_for_all' :
+
+        if args.output_format == "csv" or args.output_format == "both":
+            # Build csv-config mappings (supports single config for all CSVs or 1:1 mapping)
+            mappings = validate_config_csv_mapping(csv_files, config_files)
+
+            # Prepare output naming
+            base_name, ext = os.path.splitext(args.output_file)
+            multiple = len(mappings) > 1
+
+            for idx, (csv_file, config_file) in enumerate(mappings, start=1):
+                finalData = gradingAlgorithm(config_file=config_file, csv_file=csv_file)
+
+                if multiple:
+                    out_name = f"{base_name}_{idx}{ext}"
+                else:
+                    out_name = args.output_file
+
+                generate_csv_report(finalData, out_name)
+
+        if args.output_format == "pdf" or args.output_format == "both":
+            if len(config_files)==1:
+                count =''
+                for csv_file in csv_files:
+                    finalData = gradingAlgorithm(config_files[0],csv_file)
+                    os.makedirs('tmp',exist_ok=True)
+                    generate_pdf_report(finalData,str(count)+args.output_file , config_files[0])
+                    if count=='':
+                        count=1
+                    else:
+                        count+=1
+            else:
+                count =''
+            mappings = validate_config_csv_mapping(csv_files, config_files)
+
+            # Prepare output naming
+            base_name, ext = os.path.splitext(args.output_file)
+            multiple = len(mappings) > 1
+
+            for idx, (csv_file, config_file) in enumerate(mappings, start=1):
+                finalData = gradingAlgorithm(config_file=config_file, csv_file=csv_file)
+
+                if multiple:
+                    out_name = f"{base_name}_{idx}{ext}"
+                else:
+                    out_name = args.output_file
+
+                generate_combined_pdf(finalData,out_name,config_file)
+    
