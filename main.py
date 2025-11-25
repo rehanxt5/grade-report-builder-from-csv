@@ -197,6 +197,27 @@ def validate_config_csv_mapping(csv_files, config_files):
             f"Invalid config-to-CSV mapping: {num_csv} CSV file(s) but {num_config} config file(s). "
             f"Either provide 1 config file for all CSV files, or provide exactly {num_csv} config file(s)."
         )
+
+def verify_all_configs(csv_files, config_files):
+    """
+    Verifies all config files against their respective CSV files.
+    
+    Args:
+        csv_files: List of CSV file paths
+        config_files: List of config file paths
+    """
+    mappings = validate_config_csv_mapping(csv_files, config_files)
+    
+    line_break()
+    print("Starting config verification...")
+    line_break()
+    
+    for csv_file, config_file in mappings:
+        verify_config(config_file, csv_file)
+    
+    line_break()
+    print("✓ All config verifications passed successfully!")
+    line_break()
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A simple app to generate reports.")
     parser.add_argument("--csv_file", type=str, required=True, help="Path(s) to the input CSV file(s), comma-separated.")
