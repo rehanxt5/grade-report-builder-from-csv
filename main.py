@@ -248,6 +248,48 @@ def grade(gradeThreshold, total):
     if total >= gt['D']:
         return 'D'
     return 'F'
+def gradingAlgorithm(config_file, csv_file):
+
+    # reading the config file
+    config = configparser.ConfigParser()
+    config.optionxform = str
+    config.read(config_file)
+
+    totalMarks = dict(config['TotalMarks'])
+    weights = dict(config['Weights'])
+    gradeThresholds = dict(config['GradeThresholds'])
+    reportSettings = dict(config['ReportSettings'])
+
+    # reading the csv file and applying grading
+    ModifiedData =[]
+
+    with open(csv_file, 'r') as f:
+        reader = csv.DictReader(f)
+    
+        for row in reader:
+            total=0
+            for weight in weights:
+                val=(float(row[weight])/float(totalMarks[weight]))*float(weights[weight]) #round of the coloumn to iits weightage
+                row[weight]=val
+                total +=val
+            row['Total'] = total
+            row['Grade'] = grade(gradeThresholds,total)
+            ModifiedData.append(row)
+    # cleaning the data
+    finalData = []
+    clean=reportSettings['coloumns'].replace(' ','') #[]
+    coloumns = clean.split(',')
+    if reportSettings['_include_total_marks'] =='True':
+        coloumns.append('Total')
+    if reportSettings['_include_overall_grade'] =='True':
+        coloumns.append('Grade')
+
+    for row in ModifiedData:
+        data = {}
+        for key in coloumns:
+            data[key]=row[key]
+        finalData.append(data)
+    return finalData
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A simple app to generate reports.")
     parser.add_argument("--csv_file", type=str, required=True, help="Path(s) to the input CSV file(s), comma-separated.")
