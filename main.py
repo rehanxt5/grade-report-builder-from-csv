@@ -159,7 +159,44 @@ def verify_config(config_file, csv_file):
     
     print(f"✓ Config '{config_file}' verification passed for CSV '{csv_file}'.")
     return True
+
+def validate_config_csv_mapping(csv_files, config_files):
+    """
+    Validates the mapping between CSV files and config files.
     
+    Rules:
+    - If 1 config file: Apply to all CSV files
+    - If N config files for N CSV files: Map 1-to-1
+    - Otherwise: Error
+    
+    Args:
+        csv_files: List of CSV file paths
+        config_files: List of config file paths
+        
+    Returns:
+        List of tuples (csv_file, config_file) for verification
+        
+    Raises:
+        ValueError: If config-to-CSV mapping is invalid
+    """
+    num_csv = len(csv_files)
+    num_config = len(config_files)
+    
+    if num_config == 1:
+        # Single config for all CSV files
+        print(f"Using single config file '{config_files[0]}' for all {num_csv} CSV file(s).")
+        return [(csv_file, config_files[0]) for csv_file in csv_files]
+    
+    elif num_config == num_csv:
+        # One-to-one mapping
+        print(f"Using 1-to-1 mapping: {num_csv} config file(s) for {num_csv} CSV file(s).")
+        return list(zip(csv_files, config_files))
+    
+    else:
+        raise ValueError(
+            f"Invalid config-to-CSV mapping: {num_csv} CSV file(s) but {num_config} config file(s). "
+            f"Either provide 1 config file for all CSV files, or provide exactly {num_csv} config file(s)."
+        )
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A simple app to generate reports.")
     parser.add_argument("--csv_file", type=str, required=True, help="Path(s) to the input CSV file(s), comma-separated.")
