@@ -8,5 +8,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div class="container">
+        <header>
+            <h1>GradeCSV</h1>
+            <p>Generate beautiful grade reports instantly</p>
+        </header>
+
+        <main>
+            <form action="/generate" method="POST" enctype="multipart/form-data" class="upload-form">
+                <div class="form-group">
+                    <label for="csv_file">Student Data (CSV)</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="csv_file" name="csv_file" accept=".csv" required>
+                        <span class="file-custom">Choose CSV file...</span>
+                    </div>
+                </div>
 </body>
 </html>
+
