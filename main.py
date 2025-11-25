@@ -248,6 +248,25 @@ def grade(gradeThreshold, total):
     if total >= gt['D']:
         return 'D'
     return 'F'
+    
+def getStudentWiseData(finalData,primary_key='id'):
+    getStudentWiseData =[]   #[ [{stu1,sub1 ...},{stu2, sub2 ...},{sub3}] , [{stu3,..sub1},{sub2}]... ]
+    data=[]
+    i = 0
+    unique = []
+    while i <len(finalData):
+        if not unique:
+            unique.append(finalData[i][primary_key])
+        if finalData[i][primary_key] in unique:
+            data.append(finalData[i])
+        else:
+            getStudentWiseData.append(data)
+            data=[]
+            unique=[]
+        i+=1
+    getStudentWiseData.append(data)
+    return getStudentWiseData
+    
 def gradingAlgorithm(config_file, csv_file):
 
     # reading the config file
