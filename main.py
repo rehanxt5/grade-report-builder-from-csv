@@ -315,6 +315,206 @@ def gradingAlgorithm(config_file, csv_file):
             data[key]=row[key]
         finalData.append(data)
     return finalData
+
+
+
+def generate_pdf_report(data, output_file, config_file):
+    """
+    Generates a beautiful PDF report for a single student with all their subjects.
+    
+    Args:
+        data: List of dictionaries containing student data (one dict per subject for the same student)
+        output_file: Path to save the PDF file
+        config_file: Path to config.ini to read report settings
+    """
+
+    
+    if not os.path.exists('report'):
+        os.mkdir('report')
+    
+    # Read config for styling
+    config = configparser.ConfigParser()
+    config.optionxform = str
+    config.read(config_file)
+    
+    reportSettings = dict(config['ReportSettings'])
+    
+    # Get colors from config
+    header_bg = reportSettings.get('header_bg_color', '#2C3E50')
+    header_text = reportSettings.get('header_text_color', '#FFFFFF')
+    table_bg = reportSettings.get('table_bg_color', '#ECF0F1')
+    table_text = reportSettings.get('table_text_color', '#2C3E50')
+    report_title = reportSettings.get('report_title', 'Student Grade Report')
+    
+    # Convert hex to ReportLab colors
+    def hex_to_color(hex_str):
+        hex_str = hex_str.lstrip('#')
+        return colors.HexColor('#' + hex_str)
+    
+    header_bg_color = hex_to_color(header_bg)
+    header_text_color = hex_to_color(header_text)
+    table_bg_color = hex_to_color(table_bg)
+    table_text_color = hex_to_color(table_text)
+    
+    # Create PDF
+    pdf_path = os.path.join('report', output_file)
+    doc = SimpleDocTemplate(pdf_path, pagesize=A4, rightMargin=40, leftMargin=40, topMargin=50, bottomMargin=50)
+    
+    # Get available width
+    available_width = A4[0] - 80  # Total width minus margins
+    
+    # Container for elements
+    elements = []
+    
+    # Styles
+    styles = getSampleStyleSheet()
+    
+    # Title style
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=22,
+        textColor=header_bg_color,
+        spaceAfter=20,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    # Add title
+    title = Paragraph(report_title, title_style)
+    elements.append(title)
+    elements.append(Spacer(1, 0.2 * inch))
+    
+    # Student info style
+    info_style = ParagraphStyle(
+        'StudentInfo',
+        parent=styles['Normal'],
+        fontSize=12,
+        textColor=table_text_color,
+        spaceAfter=6,
+        fontName='Helvetica-Bold'
+    )
+    
+    # Get student name and ID from first record
+    first_record = data[0] if isinstance(data, list) else data
+    student_name = first_record.get('name', 'Unknown')
+    student_id = first_record.get('id', 'Unknown')
+    
+    elements.append(Paragraph(f"<b>Name:</b> {student_name}", info_style))
+    elements.append(Paragraph(f"<b>Student ID:</b> {student_id}", info_style))
+    elements.append(Spacer(1, 0.15 * inch))
+    
+    # Convert single dict to list for uniform processing
+    if not isinstance(data, list):
+        data = [data]
+    
+    # Prepare table data - get columns from first record, excluding name and id
+    exclude_keys = {'name', 'id'}
+    table_columns = [key for key in first_record.keys() if key not in exclude_keys]
+    
+    # Create table with header row
+    table_data = []
+    
+    # Header row
+    header_row = [col.upper() for col in table_columns]
+    table_data.append(header_row)
+    
+    # Add data rows (one per subject)
+    for record in data:
+        data_row = [str(record.get(col, '')) for col in table_columns]
+        table_data.append(data_row)
+    
+    # Calculate intelligent column widths based on content length
+    num_cols = len(table_columns)
+    
+    # Estimate width needed for each column (based on max content length)
+    col_char_widths = []
+    for i, col in enumerate(table_columns):
+        max_len = len(col.upper())  # Start with header length
+        for record in data:
+            content = str(record.get(col, ''))
+            max_len = max(max_len, len(content))
+        col_char_widths.append(max_len)
+    
+    # Calculate proportional widths (with min/max constraints)
+    total_chars = sum(col_char_widths)
+    col_widths = []
+    min_width = 0.5 * inch  # Minimum column width
+    max_width = 2.5 * inch  # Maximum column width
+    
+    for char_width in col_char_widths:
+        # Proportional width based on content
+        prop_width = (char_width / total_chars) * available_width
+        # Apply min/max constraints
+        final_width = max(min_width, min(max_width, prop_width))
+        col_widths.append(final_width)
+    
+    # Normalize to fit available width if total exceeds
+    total_width = sum(col_widths)
+    if total_width > available_width:
+        scale_factor = available_width / total_width
+        col_widths = [w * scale_factor for w in col_widths]
+    
+    # Create table
+    table = Table(table_data, colWidths=col_widths)
+    
+    # Style the table
+    table.setStyle(TableStyle([
+        # Header styling
+        ('BACKGROUND', (0, 0), (-1, 0), header_bg_color),
+        ('TEXTCOLOR', (0, 0), (-1, 0), header_text_color),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 9),
+        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+        ('VALIGN', (0, 0), (-1, 0), 'MIDDLE'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+        ('TOPPADDING', (0, 0), (-1, 0), 8),
+        
+        # Data rows styling
+        ('BACKGROUND', (0, 1), (-1, -1), table_bg_color),
+        ('TEXTCOLOR', (0, 1), (-1, -1), table_text_color),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 8),
+        ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
+        ('VALIGN', (0, 1), (-1, -1), 'MIDDLE'),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('LEFTPADDING', (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 4),
+        
+        # Grid
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.white),
+        ('BOX', (0, 0), (-1, -1), 1.5, header_bg_color),
+    ]))
+    
+    elements.append(table)
+    elements.append(Spacer(1, 0.3 * inch))
+    
+    # Result section - check if any subject failed
+    all_grades = [record.get('Grade', record.get('grade', '')) for record in data]
+    has_fail = 'F' in all_grades
+    result = 'FAIL' if has_fail else 'PASS'
+    
+    result_style = ParagraphStyle(
+        'Result',
+        parent=styles['Normal'],
+        fontSize=18,
+        textColor=colors.red if has_fail else colors.green,
+        spaceAfter=10,
+        fontName='Helvetica-Bold',
+        alignment=TA_CENTER
+    )
+    
+    result_text = Paragraph(f"<b>Result: {result}</b>", result_style)
+    elements.append(result_text)
+    
+    # Build PDF
+    doc.build(elements)
+    print(f"✓ PDF report generated: {pdf_path}")
+
+
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A simple app to generate reports.")
     parser.add_argument("--csv_file", type=str, required=True, help="Path(s) to the input CSV file(s), comma-separated.")
