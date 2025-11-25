@@ -197,7 +197,9 @@ def validate_config_csv_mapping(csv_files, config_files):
             f"Invalid config-to-CSV mapping: {num_csv} CSV file(s) but {num_config} config file(s). "
             f"Either provide 1 config file for all CSV files, or provide exactly {num_csv} config file(s)."
         )
-
+def line_break():
+    print('+' + '-'*50 + '+')
+    
 def verify_all_configs(csv_files, config_files):
     """
     Verifies all config files against their respective CSV files.
