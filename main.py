@@ -660,3 +660,34 @@ if __name__ == "__main__":
 
                 generate_combined_pdf(finalData,out_name,config_file)
     
+    if args.mode == 'report_per_student':
+        if args.output_format == "csv" or args.output_format == "both":
+            mappings = validate_config_csv_mapping(csv_files, config_files)
+
+            for csv_file, config_file in mappings:
+                finalData = gradingAlgorithm(config_file=config_file, csv_file=csv_file)
+                studentWiseData = getStudentWiseData(finalData,primary_key)
+                config = configparser.ConfigParser()
+                config.optionxform = str
+                config.read(config_file)
+                reportSettings = dict(config['ReportSettings'])
+                primary_key = reportSettings.get('primary_key', 'id')
+                secondary_key = reportSettings.get('secondary_key', 'name')
+                for data in studentWiseData:
+                    if not secondary_key:
+                        fileName = f"{data[0][primary_key]}_{data[0][secondary_key]}_report.pdf"
+                    else:
+                        fileName = f"{data[0][primary_key]}_report.pdf"
+                    generate_csv_report(data, fileName)
+        if args.output_format == "pdf" or args.output_format == "both":
+            mappings = validate_config_csv_mapping(csv_files, config_files)
+
+            for csv_file, config_file in mappings:
+                finalData = gradingAlgorithm(config_file=config_file, csv_file=csv_file)
+                studentWiseData = getStudentWiseData(finalData,primary_key)
+                for data in studentWiseData:
+                    if not secondary_key:
+                        fileName = f"{data[0][primary_key]}_{data[0][secondary_key]}_report.pdf"
+                    else:
+                        fileName = f"{data[0][primary_key]}_report.pdf"
+                    generate_pdf_report(data, fileName, config_file)
