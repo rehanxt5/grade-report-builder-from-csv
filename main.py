@@ -4,6 +4,11 @@ import csv
 import os
 import shutil
 
+def validate_files(file_list, type):
+    for file in file_list:
+        if not file.endswith(type):
+            raise ValueError(f"Invalid file type for {file}. Expected a {type} file.")
+    return True
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A simple app to generate reports.")
@@ -17,4 +22,13 @@ if __name__ == "__main__":
 
     if args.mode != "report_per_student" and args.output_file is None:
         raise ValueError("Output file must be specified when mode is not 'report_per_student'.")
+        
+    # Parse comma-separated files
+    csv_files = [f.strip() for f in args.csv_file.split(",")] 
+    config_files = [f.strip() for f in args.config_file.split(",")]
+    
+    # Validate file extensions
+    validate_files(csv_files, ".csv")
+    validate_files(config_files, ".ini")
+    
 
