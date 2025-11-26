@@ -59,6 +59,51 @@ def generate_combined_pdf_fixed(finalData, output_file, config_file):
     for pdf in pdf_files:
         if os.path.exists(pdf):
             os.remove(pdf)
+            
+@app.route('/')
+def index():
+    return render_template('index.html')
+@app.route('/generate', methods=['POST'])
+def generate():
+    if 'csv_file' not in request.files or 'config_file' not in request.files:
+        return "Missing files", 400
+    
+    csv_file = request.files['csv_file']
+    config_file = request.files['config_file']
+    output_filename = request.form.get('output_file')
+    output_format = request.form.get('output_format')
 
+    if csv_file.filename == '' or config_file.filename == '':
+        return "No selected file", 400
+
+    if not csv_file.filename.endswith('.csv') or not config_file.filename.endswith('.ini'):
+        return "Invalid file type", 400
+
+    # Save files
+    csv_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(csv_file.filename))
+    config_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(config_file.filename))
+    csv_file.save(csv_path)
+    config_file.save(config_path)
+
+    try:
+        # Run grading algorithm
+        final_data = gradingAlgorithm(config_path, csv_path)
+
+        # Generate report
+        if output_format == 'csv':
+            if not output_filename.endswith('.csv'):
+                output_filename += '.csv'
+            generate_csv_report(final_data, output_filename)
+            report_path = os.path.join('report', output_filename)
+        else:
+            if not output_filename.endswith('.pdf'):
+                output_filename += '.pdf'
+            report_path = os.path.join('report', output_filename)
+            generate_combined_pdf_fixed(final_data, report_path, config_path)
+
+        return send_file(report_path, as_attachment=True)
+
+    except Exception as e:
+        return f"Error: {str(e)}", 500
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
