@@ -1,259 +1,556 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GradeCSV Report Generator</title>
-    <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>GradeCSV | Report Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #09090b;
+            --bg-card: #18181b;
+            --bg-input: #27272a;
+            --bg-input-hover: #3f3f46;
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --text-main: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --border: #3f3f46;
+            --radius-lg: 16px;
+            --radius-md: 8px;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.08), transparent 25%), 
+                radial-gradient(circle at 85% 30%, rgba(168, 85, 247, 0.08), transparent 25%);
+            padding: 1rem;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 520px;
+            background: rgba(24, 24, 27, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Top glow line */
+        .app-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary), transparent);
+            opacity: 0.5;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .brand-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), #a855f7);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            box-shadow: 0 0 20px var(--primary-glow);
+        }
+
+        .brand-icon svg {
+            width: 24px;
+            height: 24px;
+            color: white;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to bottom right, #fff, #a1a1aa);
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .form-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .label-text {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Custom File Upload Styling */
+        .file-drop-zone {
+            position: relative;
+            background: var(--bg-input);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            transition: var(--transition);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .file-drop-zone:hover {
+            border-color: var(--primary);
+            background: var(--bg-input-hover);
+        }
+
+        .file-drop-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .file-info {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .file-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-main);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Text Input Styling */
+        .text-input-wrapper {
+            position: relative;
+        }
+
+        .text-input-wrapper svg {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            width: 18px;
+            height: 18px;
+            pointer-events: none;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid transparent;
+            color: var(--text-main);
+            padding: 0.875rem 1rem 0.875rem 3rem;
+            border-radius: var(--radius-md);
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+            background: var(--bg-input-hover);
+        }
+
+        /* Modern Radio Cards */
+        .grid-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .radio-card {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .radio-card input {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .card-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: var(--bg-input);
+            border: 1px solid transparent;
+            border-radius: var(--radius-md);
+            transition: var(--transition);
+            text-align: center;
+        }
+
+        .card-content svg {
+            width: 24px;
+            height: 24px;
+            color: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .card-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        /* Radio Checked State */
+        .radio-card input:checked + .card-content {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: var(--primary);
+        }
+
+        .radio-card input:checked + .card-content svg {
+            color: var(--primary);
+        }
+
+        .radio-card input:checked + .card-content .card-label {
+            color: var(--text-main);
+        }
+
+        /* Mode Selection (Full Width on mobile, stacked nicely) */
+        .mode-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+
+        .mode-content {
+            flex-direction: row;
+            justify-content: flex-start;
+            padding: 0.875rem 1rem;
+            gap: 1rem;
+        }
+
+        /* Submit Button */
+        .submit-btn {
+            margin-top: 1rem;
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--primary), #4f46e5);
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        /* SVG Icons Utility */
+        .icon {
+            width: 16px;
+            height: 16px;
+        }
+
+    </style>
 </head>
-<style>
-    :root {
-    --primary-color: #4F46E5;
-    --primary-hover: #4338CA;
-    --bg-color: #F9FAFB;
-    --card-bg: #FFFFFF;
-    --text-main: #111827;
-    --text-secondary: #6B7280;
-    --border-color: #E5E7EB;
-    --input-bg: #F3F4F6;
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-main);
-    line-height: 1.5;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-}
-
-.container {
-    width: 100%;
-    max-width: 480px;
-    padding: 2rem;
-    background-color: var(--card-bg);
-    border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-header {
-    text-align: center;
-    margin-bottom: 2rem;
-}
-
-header h1 {
-    font-size: 1.875rem;
-    font-weight: 700;
-    color: var(--text-main);
-    margin-bottom: 0.5rem;
-}
-
-header p {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-label {
-    display: block;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-main);
-    margin-bottom: 0.5rem;
-}
-
-/* File Input Styling */
-.file-input-wrapper {
-    position: relative;
-    overflow: hidden;
-    display: inline-block;
-    width: 100%;
-}
-
-.file-input-wrapper input[type=file] {
-    position: absolute;
-    left: 0;
-    top: 0;
-    opacity: 0;
-    width: 100%;
-    height: 100%;
-    cursor: pointer;
-}
-
-.file-custom {
-    display: block;
-    padding: 0.75rem 1rem;
-    background-color: var(--input-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 0.5rem;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    transition: all 0.2s;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.file-input-wrapper:hover .file-custom {
-    background-color: #E5E7EB;
-}
-
-/* Text Input Styling */
-input[type="text"] {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: 0.5rem;
-    font-size: 0.875rem;
-    color: var(--text-main);
-    background-color: var(--input-bg);
-    transition: border-color 0.2s;
-}
-
-input[type="text"]:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    background-color: #fff;
-}
-
-/* Radio Button Styling */
-.radio-group {
-    display: flex;
-    gap: 1.5rem;
-}
-
-.radio-label {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    font-size: 0.875rem;
-    color: var(--text-main);
-}
-
-.radio-label input {
-    display: none;
-}
-
-.radio-custom {
-    width: 1.25rem;
-    height: 1.25rem;
-    border: 2px solid var(--border-color);
-    border-radius: 50%;
-    margin-right: 0.5rem;
-    position: relative;
-    transition: all 0.2s;
-}
-
-.radio-label input:checked + .radio-custom {
-    border-color: var(--primary-color);
-}
-
-.radio-label input:checked + .radio-custom::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 0.625rem;
-    height: 0.625rem;
-    background-color: var(--primary-color);
-    border-radius: 50%;
-}
-
-/* Submit Button */
-.submit-btn {
-    width: 100%;
-    padding: 0.875rem;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.submit-btn:hover {
-    background-color: var(--primary-hover);
-}
-
-</style>
 <body>
-    <div class="container">
+
+    <div class="app-container">
         <header>
+            <div class="brand-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                </svg>
+            </div>
             <h1>GradeCSV</h1>
-            <p>Generate beautiful grade reports instantly</p>
+            <p>Intelligent Grade Report Generator</p>
         </header>
 
-        <main>
-            <form action="/generate" method="POST" enctype="multipart/form-data" class="upload-form">
-                <div class="form-group">
-                    <label for="csv_file">Student Data (CSV)</label>
-                    <div class="file-input-wrapper">
-                        <input type="file" id="csv_file" name="csv_file" accept=".csv" required>
-                        <span class="file-custom">Choose CSV file...</span>
+        <form action="/generate" method="POST" enctype="multipart/form-data" class="form-section">
+            
+            <div class="input-group">
+                <div class="label-text">
+                    <svg class="icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                    Student Data
+                </div>
+                <div class="file-drop-zone">
+                    <div class="file-icon">
+                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" /></svg>
                     </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="config_file">Configuration (INI)</label>
-                    <div class="file-input-wrapper">
-                        <input type="file" id="config_file" name="config_file" accept=".ini" required>
-                        <span class="file-custom">Choose Config file...</span>
+                    <div class="file-info">
+                        <span class="file-name" id="csv-name">Upload CSV file(s)...</span>
+                        <span class="file-hint">Required format: .csv (multiple allowed)</span>
                     </div>
+                    <input type="file" id="csv_file" name="csv_file" accept=".csv" multiple required>
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label for="output_file">Output Filename</label>
-                    <input type="text" id="output_file" name="output_file" placeholder="e.g., report.pdf" required>
+            <div class="input-group">
+                <div class="label-text">
+                    <svg class="icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    Configuration
                 </div>
-
-                <div class="form-group">
-                    <label>Report Format</label>
-                    <div class="radio-group">
-                        <label class="radio-label">
-                            <input type="radio" name="output_format" value="pdf" checked>
-                            <span class="radio-custom"></span>
-                            PDF
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="output_format" value="csv">
-                            <span class="radio-custom"></span>
-                            CSV
-                        </label>
+                <div class="file-drop-zone">
+                    <div class="file-icon">
+                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.795 23.91 23.91 0 01-1.014 5.795m0-11.59a23.877 23.877 0 016.12 12.92m-6.12-12.92c-1.558 5.837-5.96 9.33-11.905 10.76" /></svg>
                     </div>
+                    <div class="file-info">
+                        <span class="file-name" id="config-name">Upload Config file(s)...</span>
+                        <span class="file-hint">Required format: .ini (multiple allowed)</span>
+                    </div>
+                    <input type="file" id="config_file" name="config_file" accept=".ini" multiple required>
                 </div>
+            </div>
 
-                <button type="submit" class="submit-btn">Generate Report</button>
-            </form>
-        </main>
+            <div class="input-group">
+                <div class="label-text">
+                    <svg class="icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 19.425a4.5 4.5 0 01-1.413 1.043l-6.171 2.872 2.872-6.172a4.5 4.5 0 011.042-1.413L16.862 4.487z" /></svg>
+                    Output Filename
+                </div>
+                <div class="text-input-wrapper">
+                    <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                    <input type="text" id="output_file" name="output_file" placeholder="e.g., Final_Report_2024" required>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div class="label-text">Report Format</div>
+                <div class="grid-options">
+                    <label class="radio-card">
+                        <input type="radio" name="output_format" value="pdf" checked>
+                        <div class="card-content">
+                            <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
+                            <span class="card-label">PDF</span>
+                        </div>
+                    </label>
+                    <label class="radio-card">
+                        <input type="radio" name="output_format" value="csv">
+                        <div class="card-content">
+                            <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m13.5 2.625v-1.5c0-.621.504-1.125 1.125-1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V3.75c0-.621-.504-1.125-1.125-1.125H5.625a1.125 1.125 0 01-1.125 1.125v1.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            <span class="card-label">CSV</span>
+                        </div>
+                    </label>
+                    <label class="radio-card">
+                        <input type="radio" name="output_format" value="both">
+                        <div class="card-content">
+                            <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" /></svg>
+                            <span class="card-label">Both</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div class="label-text">Generation Mode</div>
+                <div class="mode-options">
+                    <label class="radio-card">
+                        <input type="radio" name="mode" value="report_for_all" checked>
+                        <div class="card-content mode-content">
+                            <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" /></svg>
+                            <span class="card-label">Combine All (One File)</span>
+                        </div>
+                    </label>
+                    <label class="radio-card">
+                        <input type="radio" name="mode" value="report_per_student">
+                        <div class="card-content mode-content">
+                            <svg fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
+                            <span class="card-label">Individual Student Files</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- File Mapping Section (shown only when multiple files) -->
+            <div id="file-mapping-section" style="display:none;" class="input-group">
+                <div class="label-text">
+                    <svg class="icon" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" /></svg>
+                    Link CSV to Config Files
+                </div>
+                <div id="mapping-container" style="margin-top: 1rem;"></div>
+                <input type="hidden" id="file_mapping" name="file_mapping" value="{}">
+            </div>
+
+            <button type="submit" class="submit-btn">
+                <span>Generate Report</span>
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" /></svg>
+            </button>
+        </form>
     </div>
 
     <script>
-        // Simple script to update file input text
-        document.querySelectorAll('input[type="file"]').forEach(input => {
-            input.addEventListener('change', e => {
-                const fileName = e.target.files[0]?.name || 'Choose file...';
-                e.target.nextElementSibling.textContent = fileName;
-            });
+        // Enhanced script for file input visual feedback and mapping
+        let csvFiles = [];
+        let configFiles = [];
+        let fileMapping = {};
+
+        const handleFileSelect = (input, nameSpanId) => {
+            const files = input.files;
+            const span = document.getElementById(nameSpanId);
+            const dropZone = input.closest('.file-drop-zone');
+            
+            if (files.length > 0) {
+                const fileNames = files.length === 1 
+                    ? files[0].name 
+                    : `${files.length} files selected`;
+                span.textContent = fileNames;
+                span.style.color = '#fff';
+                dropZone.style.borderColor = 'var(--primary)';
+                dropZone.style.background = 'rgba(99, 102, 241, 0.1)';
+                
+                // Update file arrays
+                if (nameSpanId === 'csv-name') {
+                    csvFiles = Array.from(files);
+                } else {
+                    configFiles = Array.from(files);
+                }
+                
+                // Show mapping UI if both have multiple files
+                updateMappingUI();
+            } else {
+                span.textContent = nameSpanId.includes('csv') ? 'Upload CSV file(s)...' : 'Upload Config file(s)...';
+                span.style.color = 'var(--text-main)';
+                dropZone.style.borderColor = 'var(--border)';
+                dropZone.style.background = 'var(--bg-input)';
+            }
+        };
+
+        function updateMappingUI() {
+            const mappingSection = document.getElementById('file-mapping-section');
+            const mappingContainer = document.getElementById('mapping-container');
+            
+            // Show mapping only if both CSV and config have multiple files
+            if (csvFiles.length > 1 && configFiles.length > 1) {
+                mappingSection.style.display = 'block';
+                
+                // Build mapping UI
+                let html = '<div style="margin-bottom: 1rem; padding: 0.75rem; background: rgba(99, 102, 241, 0.1); border-radius: var(--radius-md); color: var(--primary); font-size: 0.85rem;">💡 Select which config file to use for each CSV file</div>';
+                
+                csvFiles.forEach((csvFile, csvIdx) => {
+                    html += `
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem; padding: 0.75rem; background: var(--bg-input); border-radius: var(--radius-md);">
+                            <div style="flex: 1; color: var(--text-main); font-size: 0.9rem;">
+                                <svg style="width: 16px; height: 16px; display: inline; vertical-align: middle; margin-right: 0.5rem;" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="#10b981"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                ${csvFile.name}
+                            </div>
+                            <svg style="width: 20px; height: 20px; color: var(--text-muted);" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/></svg>
+                            <select id="mapping_${csvIdx}" onchange="updateMapping(${csvIdx}, this.value)" style="flex: 1; padding: 0.5rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-main); font-size: 0.9rem; cursor: pointer;">
+                                ${configFiles.map((configFile, configIdx) => `
+                                    <option value="${configIdx}" ${csvIdx === configIdx ? 'selected' : ''}>
+                                        ${configFile.name}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                    `;
+                    // Initialize mapping - default to same index
+                    fileMapping[csvIdx] = csvIdx < configFiles.length ? csvIdx : 0;
+                });
+                
+                mappingContainer.innerHTML = html;
+                document.getElementById('file_mapping').value = JSON.stringify(fileMapping);
+                console.log('File mapping initialized:', fileMapping);
+            } else {
+                mappingSection.style.display = 'none';
+                fileMapping = {};
+                document.getElementById('file_mapping').value = '{}';
+            }
+        }
+
+        function updateMapping(csvIdx, configIdx) {
+            fileMapping[csvIdx] = parseInt(configIdx);
+            document.getElementById('file_mapping').value = JSON.stringify(fileMapping);
+            console.log('Mapping updated:', fileMapping);
+            console.log(`CSV ${csvIdx} (${csvFiles[csvIdx].name}) -> Config ${configIdx} (${configFiles[configIdx].name})`);
+        }
+
+        document.getElementById('csv_file').addEventListener('change', function() {
+            handleFileSelect(this, 'csv-name');
+        });
+
+        document.getElementById('config_file').addEventListener('change', function() {
+            handleFileSelect(this, 'config-name');
         });
     </script>
 </body>
 </html>
-
-
-
-
